@@ -10,7 +10,7 @@ Enterprise internal IT portal with user-facing services, admin CMS, and backend 
 - `backend/` Express + TypeScript API
 - `user-portal/` React + Vite user portal
 - `admin-cms/` React + Vite admin CMS
-- `nginx/` reverse proxy
+- `nginx/` legacy/reference reverse proxy config (production edge is managed externally)
 
 ## Environment Variables
 Copy `.env.example` to `.env` and update values:
@@ -23,6 +23,8 @@ Copy `.env.example` to `.env` and update values:
 - `FRONTEND_URL`, `ADMIN_URL`, `ADMIN_PATH`
 - `USER_REDIRECT_URI`, `ADMIN_REDIRECT_URI`
 - `ADMIN_USERNAME`, `ADMIN_PASSWORD` (local emergency admin)
+- `BOOTSTRAP_LOCAL_ONLY` (first-deploy local-only login bootstrap)
+- `APP_BIND_HOST`, `BACKEND_HOST_PORT`, `USER_PORTAL_HOST_PORT`, `ADMIN_CMS_HOST_PORT` (external reverse proxy upstream bindings)
 - `AUTH_ENCRYPTION_ENABLED`, `AUTH_PAYLOAD_ENC_KEY`, `AUTH_PAYLOAD_ENC_KID`
 
 `ADMIN_PATH` controls the admin URL path segment (default recommended: `secure-admin`). `ADMIN_URL` should match that path, e.g. `https://your-domain/secure-admin`.
@@ -48,6 +50,11 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
+By default the stack binds locally for an external reverse proxy:
+- backend API: `127.0.0.1:3000`
+- user portal: `127.0.0.1:3001`
+- admin CMS: `127.0.0.1:3002`
+
 Stop:
 
 ```bash
@@ -72,29 +79,24 @@ docker compose up -d --build
 Verify the backend:
 
 ```bash
-curl -s http://localhost/api/health
-curl -s http://localhost/api/services
+curl -s http://127.0.0.1:3000/api/health
+curl -s http://127.0.0.1:3000/api/services
+curl -I http://127.0.0.1:3001
+curl -I http://127.0.0.1:3002
 ```
 
 ## Troubleshooting
-- **/api returns HTML**: Check `nginx/nginx.conf` to ensure `/api/` is proxied to backend.
+- **/api returns HTML**: Check your external reverse proxy routing so `/api/` is sent to backend (`127.0.0.1:3000` by default). See `docs/EXTERNAL_REVERSE_PROXY_REQUIREMENTS.md`.
 - **SPA routes 404**: Ensure `try_files $uri /index.html;` in the SPA nginx configs.
 - **CORS errors**: Ensure `FRONTEND_URL` and `ADMIN_URL` match the browser origin.
 - **Azure auth issues**: Validate redirect URIs and domain restriction to `@mtcc.com.mv`.
 
-## HTTPS
-This stack can terminate HTTPS with a self-signed cert for local/dev:
+## Reverse Proxy / TLS
+Production deployments are expected to use an external security-managed reverse proxy / TLS terminator.
 
-```bash
-mkdir -p ./nginx/certs
-openssl req -x509 -nodes -newkey rsa:2048 \\
-  -keyout ./nginx/certs/server.key \\
-  -out ./nginx/certs/server.crt \\
-  -days 365 -subj "/CN=localhost"
-docker-compose up -d nginx
-```
-
-For production, use an external TLS terminator (recommended) or replace the certs with real ones.
+See:
+- `docs/EXTERNAL_REVERSE_PROXY_REQUIREMENTS.md`
+- `docs/NEW_SERVER_DEPLOYMENT.md`
 
 ## Default Admin Access
 The local admin account is created on backend start using:

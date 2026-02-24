@@ -224,7 +224,7 @@ Disabled pages are removed from nav and show “Page disabled” if accessed dir
 - `backend/` — API
 - `user-portal/` — User UI
 - `admin-cms/` — Admin UI
-- `nginx/` — reverse proxy config
+- `nginx/` — reference reverse proxy config (production edge is managed externally)
 - `docs/` — documentation
 
 ## 12) Operations

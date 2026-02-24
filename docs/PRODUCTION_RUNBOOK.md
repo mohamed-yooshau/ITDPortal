@@ -2,18 +2,16 @@
 
 ## 1) Prerequisites
 - DNS for `itdportal.mtcc.com.mv` (and optional `dev-itdportal.mtcc.com.mv`).
-- Valid TLS certs (Let’s Encrypt or org CA).
+- Security-managed reverse proxy / TLS termination (certified by security team).
 - Docker + Docker Compose installed.
 
-## 2) TLS certificates
-Place certs in:
-- `/opt/it-portal/nginx/certs/server.crt`
-- `/opt/it-portal/nginx/certs/server.key`
-
-Restart nginx after updating certs:
-```
-docker compose up -d nginx
-```
+## 2) External Reverse Proxy
+- This app stack no longer runs the bundled edge `nginx` service by default.
+- The app exposes local host ports for an external reverse proxy:
+  - backend API: `127.0.0.1:${BACKEND_HOST_PORT:-3000}`
+  - user portal: `127.0.0.1:${USER_PORTAL_HOST_PORT:-3001}`
+  - admin CMS: `127.0.0.1:${ADMIN_CMS_HOST_PORT:-3002}`
+- Provide your security team with `ADMIN_PATH` and the routing requirements in `docs/EXTERNAL_REVERSE_PROXY_REQUIREMENTS.md`.
 
 ## 3) Environment
 Copy and fill:
@@ -43,16 +41,28 @@ Do not manage these through the admin panel:
 ## 4) Start services
 ```
 cd /opt/it-portal
-docker compose up -d
+docker compose up -d --build
+```
+
+If upgrading from an older deployment that used the bundled `nginx` service:
+```
+docker compose up -d --build --remove-orphans
 ```
 
 ## 5) Verify
 ```
 docker compose ps
+curl -s http://127.0.0.1:${BACKEND_HOST_PORT:-3000}/api/health
+curl -I http://127.0.0.1:${USER_PORTAL_HOST_PORT:-3001}
+curl -I http://127.0.0.1:${ADMIN_CMS_HOST_PORT:-3002}
+```
+
+Once the external reverse proxy is configured:
+```
 curl -I https://itdportal.mtcc.com.mv
 ```
 
-Only nginx should expose ports 80/443.
+Only the security-managed reverse proxy should expose `80/443`.
 
 ## 6) Backup
 ```
@@ -70,7 +80,6 @@ docker save \
   it-portal-backend \
   it-portal-user-portal \
   it-portal-admin-cms \
-  nginx:1.25-alpine \
   postgres:15-alpine \
   redis:7-alpine \
   -o /opt/it-portal/exports/itd-portal-images.tar
@@ -82,5 +91,6 @@ docker load -i itd-portal-images.tar
 ```
 
 ## 9) Rollback
-- Restore previous `docker-compose.yml` and nginx config.
+- Restore previous `docker-compose.yml` and app images.
+- Coordinate reverse proxy rollback with the security team if routing changed.
 - `docker compose down && docker compose up -d`

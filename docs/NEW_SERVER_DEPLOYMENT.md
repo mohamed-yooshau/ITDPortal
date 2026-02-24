@@ -5,13 +5,14 @@ This project supports a safe first-deploy bootstrap flow:
 - `BOOTSTRAP_LOCAL_ONLY=true` enables local login only
 - Microsoft SSO is disabled until initial admin setup is complete
 - Infrastructure secrets stay on the server (`.env` / secret manager), not in the admin panel
+- Reverse proxy / TLS is managed separately (security-managed Nginx/edge)
 
 ## What Must Stay Outside The Admin Panel
 
 Keep these server-managed:
 
 - `JWT_SECRET`
-- TLS certificates and private keys
+- TLS certificates and private keys (security-managed edge)
 - Database / Redis runtime credentials
 - Docker / Compose / Nginx / host networking configuration
 
@@ -34,6 +35,12 @@ Open ports:
 - `80/tcp`
 - `443/tcp`
 
+App containers expose local-only ports by default (for the external reverse proxy to use):
+
+- `127.0.0.1:3000` -> backend API
+- `127.0.0.1:3001` -> user portal SPA
+- `127.0.0.1:3002` -> admin CMS SPA
+
 Point DNS to the server IP:
 
 - `your-domain.example`
@@ -44,7 +51,37 @@ Recommended location:
 
 - `/opt/it-portal`
 
-## 3. Create Production Environment File
+## 3. Stop Only Conflicting Services / Containers
+
+If the server already runs other workloads, only stop what conflicts with your planned ports.
+
+Check current containers and listeners:
+
+```bash
+docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}'
+ss -ltnp | egrep ':(80|443|3000|3001|3002)\s' || true
+```
+
+Stop only conflicting system services (if present):
+
+```bash
+systemctl stop nginx apache2 caddy 2>/dev/null || true
+```
+
+Stop only conflicting containers:
+
+```bash
+docker ps --format '{{.ID}}\t{{.Names}}\t{{.Ports}}'
+docker stop <container_id_1> <container_id_2>
+```
+
+If `3000/3001/3002` are in use and cannot be stopped, change these in `.env` before deploy:
+
+- `BACKEND_HOST_PORT`
+- `USER_PORTAL_HOST_PORT`
+- `ADMIN_CMS_HOST_PORT`
+
+## 4. Create Production Environment File
 
 Use the template:
 
@@ -72,34 +109,61 @@ First deploy:
 
 - `BOOTSTRAP_LOCAL_ONLY=true`
 
+External reverse proxy upstream port bindings (defaults shown):
+
+- `APP_BIND_HOST=127.0.0.1`
+- `BACKEND_HOST_PORT=3000`
+- `USER_PORTAL_HOST_PORT=3001`
+- `ADMIN_CMS_HOST_PORT=3002`
+
 Protect the file:
 
 ```bash
 chmod 600 /opt/it-portal/.env
 ```
 
-## 4. Install TLS Certificates
+## 5. Coordinate External Reverse Proxy (Security Team)
 
-Place valid certificates (not self-signed localhost certs):
+Your security team will manage Nginx/TLS separately. Provide them:
 
-- `/opt/it-portal/nginx/certs/server.crt`
-- `/opt/it-portal/nginx/certs/server.key`
+- Public domain name
+- `ADMIN_PATH`
+- Upstream ports from `.env` (`BACKEND_HOST_PORT`, `USER_PORTAL_HOST_PORT`, `ADMIN_CMS_HOST_PORT`)
 
-## 5. Deploy Containers
+Routing and header requirements are documented in:
+
+- `docs/EXTERNAL_REVERSE_PROXY_REQUIREMENTS.md`
+
+## 6. Deploy Containers
 
 ```bash
 cd /opt/it-portal
 docker compose up -d --build
 ```
 
+If this server previously ran an older version of this stack with the bundled `nginx` service, remove obsolete containers:
+
+```bash
+cd /opt/it-portal
+docker compose up -d --build --remove-orphans
+```
+
 Verify:
 
 ```bash
 docker compose ps
+curl -s http://127.0.0.1:${BACKEND_HOST_PORT:-3000}/api/health
+curl -I http://127.0.0.1:${USER_PORTAL_HOST_PORT:-3001}
+curl -I http://127.0.0.1:${ADMIN_CMS_HOST_PORT:-3002}
+```
+
+If the external reverse proxy is already configured, also verify:
+
+```bash
 curl -I https://your-domain.example
 ```
 
-## 6. First Login (Local Admin Only)
+## 7. First Login (Local Admin Only)
 
 Open the admin console:
 
@@ -112,7 +176,7 @@ Log in using:
 
 In bootstrap mode, SSO is intentionally disabled.
 
-## 7. Configure App-Level Settings In Admin Panel
+## 8. Configure App-Level Settings In Admin Panel
 
 Set:
 
@@ -121,7 +185,7 @@ Set:
 - Helpdesk / APS / Uptime settings
 - Branding / pages / content
 
-## 8. Enable SSO After Setup
+## 9. Enable SSO After Setup
 
 Change:
 
@@ -141,7 +205,7 @@ Optional:
 - Disable local login in admin panel after SSO is confirmed
 - Keep a local admin account as break-glass access (strong password, restricted use)
 
-## 9. Migrating Existing DB To A New Server (Optional)
+## 10. Migrating Existing DB To A New Server (Optional)
 
 If you are moving an existing environment, restore the database and then normalize runtime URLs in the `settings` table so they match the new domain.
 
@@ -169,7 +233,7 @@ Note:
 - DB backups do not automatically include uploaded files in Docker volumes (`guides`, `policies`, branding uploads)
 - Copy uploads separately if migrating production data
 
-## 10. Git Safety Notes
+## 11. Git Safety Notes
 
 This repository is configured to keep the following out of Git:
 
