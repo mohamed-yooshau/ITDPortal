@@ -1,0 +1,2 @@
+ALTER TABLE knowledge_base
+ADD COLUMN IF NOT EXISTS author TEXT;

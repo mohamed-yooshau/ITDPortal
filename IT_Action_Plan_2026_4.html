@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Action Plan 2026 | MTCC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff; --bg-secondary: #f8fafc; --bg-tertiary: #f1f5f9; --bg-card: #ffffff;
+            --text-primary: #0f172a; --text-secondary: #475569; --text-muted: #94a3b8;
+            --border-color: #e2e8f0; --border-light: #f1f5f9;
+            --accent: #0066cc; --accent-hover: #0052a3; --accent-light: rgba(0,102,204,0.1);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05); --shadow-md: 0 4px 12px rgba(0,0,0,0.08); --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --color-itops: #dc2626; --color-infra: #7c3aed; --color-dev: #3b82f6; --color-erp: #ea580c; --color-3rdparty: #1f2937; --color-admin: #6b7280;
+            --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f172a; --bg-secondary: #1e293b; --bg-tertiary: #334155; --bg-card: #1e293b;
+            --text-primary: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
+            --border-color: #334155; --border-light: #1e293b;
+            --accent: #3b82f6; --accent-hover: #2563eb; --accent-light: rgba(59,130,246,0.15);
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.2); --shadow-md: 0 4px 12px rgba(0,0,0,0.3); --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-secondary); color: var(--text-primary); min-height: 100vh; user-select: none; }
+        .app-container { min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header */
+        .header { background: var(--bg-card); border-bottom: 1px solid var(--border-color); padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+        .logo-section { display: flex; align-items: center; gap: 12px; }
+        .logo { width: 36px; height: 36px; background: var(--accent); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: white; }
+        .title-group h1 { font-size: 16px; font-weight: 600; }
+        .title-group span { font-size: 11px; color: var(--text-secondary); }
+        .header-actions { display: flex; align-items: center; gap: 6px; }
+        
+        /* Buttons */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 6px 12px; border-radius: var(--radius-md); font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s ease; border: 1px solid transparent; font-family: inherit; white-space: nowrap; }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); }
+        .btn-secondary:hover { background: var(--bg-tertiary); }
+        .btn-ghost { background: transparent; color: var(--text-secondary); padding: 6px; }
+        .btn-ghost:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .btn-icon { width: 32px; height: 32px; padding: 0; }
+        .btn-danger { background: #dc2626; color: white; border-color: #dc2626; }
+        .btn-danger:hover { background: #b91c1c; }
+        .divider { width: 1px; height: 20px; background: var(--border-color); margin: 0 4px; }
+        
+        /* Main */
+        .main-content { flex: 1; padding: 16px 24px; display: flex; flex-direction: column; gap: 12px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        
+        /* Search */
+        .search-box { position: relative; }
+        .search-box input { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 6px 10px 6px 32px; font-size: 12px; color: var(--text-primary); width: 200px; font-family: inherit; }
+        .search-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+        .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        
+        /* Dropdown */
+        .dropdown { position: relative; }
+        .dropdown-menu { position: absolute; top: 100%; left: 0; margin-top: 4px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); min-width: 160px; z-index: 50; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: all 0.15s ease; }
+        .dropdown.open .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 12px; color: var(--text-primary); cursor: pointer; }
+        .dropdown-item:hover { background: var(--bg-tertiary); }
+        .dropdown-item.active { color: var(--accent); }
+        .dropdown-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
+        
+        /* Legend */
+        .legend-panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
+        .legend-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; cursor: pointer; }
+        .legend-header:hover { background: var(--bg-tertiary); }
+        .legend-header h3 { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .legend-toggle { color: var(--text-muted); transition: transform 0.2s ease; }
+        .legend-panel.collapsed .legend-toggle { transform: rotate(-90deg); }
+        .legend-content { display: flex; gap: 6px; padding: 0 14px 10px; flex-wrap: wrap; }
+        .legend-panel.collapsed .legend-content { max-height: 0; padding: 0 14px; opacity: 0; overflow: hidden; }
+        .department-chip { display: flex; align-items: center; gap: 5px; padding: 4px 10px; background: var(--bg-tertiary); border: 1px solid transparent; border-radius: 100px; font-size: 11px; font-weight: 500; cursor: pointer; }
+        .department-chip:hover { border-color: var(--border-color); }
+        .department-chip.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+        .department-chip.inactive { opacity: 0.4; }
+        .department-dot { width: 8px; height: 8px; border-radius: 50%; }
+        
+        /* Stats */
+        .stats-row { display: flex; gap: 8px; }
+        .stat-item { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); font-size: 12px; }
+        .stat-item strong { font-weight: 600; }
+        .stat-item span { color: var(--text-secondary); }
+        
+        /* Gantt */
+        .gantt-container { flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
+        .gantt-wrapper { overflow: auto; max-height: calc(100vh - 220px); }
+        .gantt-table { width: 100%; min-width: 1000px; border-collapse: collapse; }
+        .gantt-header { background: var(--bg-secondary); position: sticky; top: 0; z-index: 10; }
+        .gantt-header th { padding: 10px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); text-align: center; border-bottom: 1px solid var(--border-color); }
+        .gantt-header th:first-child { text-align: left; padding-left: 14px; width: 260px; min-width: 260px; position: sticky; left: 0; background: var(--bg-secondary); z-index: 11; }
+        
+        .gantt-row { transition: background 0.1s ease; }
+        .gantt-row:hover { background: var(--bg-tertiary); }
+        .gantt-row.dragging { background: var(--accent-light); }
+        .gantt-row td { padding: 0; height: 52px; border-bottom: 1px solid var(--border-light); position: relative; }
+        .gantt-row td:first-child { padding: 0 14px; position: sticky; left: 0; background: var(--bg-card); z-index: 5; }
+        .gantt-row:hover td:first-child { background: var(--bg-tertiary); }
+        .gantt-row.dragging td:first-child { background: var(--accent-light); }
+        
+        .initiative-cell { display: flex; align-items: center; gap: 8px; height: 100%; }
+        .initiative-colors { display: flex; flex-direction: column; gap: 2px; }
+        .initiative-color { width: 3px; height: 10px; border-radius: 1px; }
+        .initiative-info { flex: 1; min-width: 0; }
+        .initiative-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .initiative-meta { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+        .initiative-actions { display: flex; gap: 2px; opacity: 0; transition: opacity 0.1s ease; }
+        .gantt-row:hover .initiative-actions { opacity: 1; }
+        .action-btn { width: 24px; height: 24px; border: none; background: transparent; border-radius: var(--radius-sm); color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .action-btn:hover { background: var(--accent); color: white; }
+        .action-btn.delete:hover { background: #dc2626; }
+        
+        /* Timeline cells */
+        .timeline-cell { position: relative; border-left: 1px solid var(--border-light); }
+        .timeline-cell.current-month { background: var(--accent-light); }
+        
+        /* Month grid overlay for drag feedback */
+        .month-grid { position: absolute; inset: 0; display: flex; pointer-events: none; }
+        .month-slot { flex: 1; border-right: 1px dashed transparent; transition: all 0.15s ease; }
+        .month-slot.highlight { background: var(--accent-light); border-color: var(--accent); }
+        
+        /* Enhanced Bar Styles */
+        .bar {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 32px;
+            border-radius: 6px;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, height 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .bar:hover {
+            height: 36px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .bar.dragging {
+            cursor: grabbing;
+            height: 38px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            z-index: 100;
+            opacity: 0.9;
+        }
+        .bar-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            white-space: nowrap;
+            padding: 0 8px;
+            pointer-events: none;
+        }
+        
+        /* Resize handles - much larger hit area */
+        .resize-handle {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            width: 16px;
+            cursor: ew-resize;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .resize-handle.left { left: -6px; }
+        .resize-handle.right { right: -6px; }
+        .resize-handle::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: rgba(255,255,255,0.4);
+            border-radius: 2px;
+            transition: all 0.15s ease;
+        }
+        .bar:hover .resize-handle::before {
+            background: rgba(255,255,255,0.8);
+            height: 20px;
+        }
+        .resize-handle:hover::before {
+            background: white;
+            width: 5px;
+            height: 24px;
+        }
+        
+        /* Drag tooltip */
+        .drag-tooltip {
+            position: fixed;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 6px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+        .drag-tooltip.visible { opacity: 1; }
+        .drag-tooltip .dates { color: var(--accent); font-weight: 600; }
+        .drag-tooltip .duration { color: var(--text-muted); margin-left: 6px; }
+        
+        /* View mode */
+        .view-mode .toolbar, .view-mode .stats-row { display: none; }
+        .view-mode .legend-panel { position: fixed; bottom: 16px; right: 16px; z-index: 100; box-shadow: var(--shadow-lg); max-width: 400px; }
+        .view-mode .initiative-actions { display: none !important; }
+        .view-mode .gantt-container { border-radius: 0; border: none; }
+        .view-mode .main-content { padding: 12px; }
+        .view-mode .gantt-wrapper { max-height: calc(100vh - 120px); }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.15s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: all 0.15s ease; box-shadow: var(--shadow-lg); }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal-header { padding: 16px 16px 0; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { font-size: 15px; font-weight: 600; }
+        .modal-close { width: 28px; height: 28px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { background: var(--bg-tertiary); }
+        .modal-body { padding: 16px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 8px 10px; font-size: 12px; color: var(--text-primary); font-family: inherit; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+        .segments-container { border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px; }
+        .segment-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+        .segment-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .segment-row select { padding: 6px 8px; font-size: 11px; }
+        .add-segment-btn { width: 100%; margin-top: 8px; }
+        .modal-footer { padding: 0 16px 16px; display: flex; gap: 8px; justify-content: flex-end; }
+        
+        /* Toast */
+        .toast-container { position: fixed; bottom: 16px; right: 16px; z-index: 1001; display: flex; flex-direction: column; gap: 6px; }
+        .view-mode .toast-container { bottom: 80px; }
+        .toast { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 10px 14px; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-lg); animation: slideIn 0.2s ease-out; font-size: 12px; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.success { border-left: 3px solid #22c55e; }
+        .toast.error { border-left: 3px solid #dc2626; }
+        
+        /* Confirm */
+        .confirm-content { text-align: center; padding: 16px; }
+        .confirm-content svg { color: #dc2626; margin-bottom: 10px; }
+        .confirm-content h3 { font-size: 15px; margin-bottom: 6px; }
+        .confirm-content p { color: var(--text-secondary); font-size: 12px; margin-bottom: 16px; }
+        .confirm-actions { display: flex; gap: 8px; justify-content: center; }
+        
+        /* Empty */
+        .empty-state { padding: 40px 16px; text-align: center; }
+        .empty-state svg { color: var(--text-muted); margin-bottom: 10px; }
+        .empty-state h3 { font-size: 14px; margin-bottom: 4px; }
+        .empty-state p { color: var(--text-secondary); font-size: 12px; }
+        
+        /* Print */
+        @media print { .header-actions, .toolbar, .initiative-actions, .modal-overlay, .toast-container, .legend-panel, .drag-tooltip { display: none !important; } }
+        
+        /* Cursor styles when dragging */
+        body.dragging-move { cursor: grabbing !important; }
+        body.dragging-resize { cursor: ew-resize !important; }
+        body.dragging-move *, body.dragging-resize * { cursor: inherit !important; }
+    </style>
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <header class="header" id="header">
+            <div class="logo-section">
+                <div class="logo">IT</div>
+                <div class="title-group"><h1>IT Action Plan 2026</h1><span>MTCC Information Technology</span></div>
+            </div>
+            <div class="header-actions" id="headerActions">
+                <button class="btn btn-ghost btn-icon" onclick="toggleTheme()" title="Toggle theme"><svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></button>
+                <div class="divider"></div>
+                <button class="btn btn-secondary" onclick="toggleViewMode()" id="viewModeBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>View</button>
+                <button class="btn btn-secondary" onclick="exportToPDF()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><path d="M12 18v-6M9 15l3 3 3-3"/></svg>PDF</button>
+                <button class="btn btn-secondary" onclick="window.print()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Print</button>
+                <button class="btn btn-primary" onclick="openModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add</button>
+            </div>
+        </header>
+        <main class="main-content" id="mainContent">
+            <div class="toolbar" id="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="text" placeholder="Search..." id="searchInput" oninput="applyFilters()"></div>
+                    <div class="dropdown" id="sortDropdown"><button class="btn btn-secondary" onclick="toggleDropdown('sortDropdown')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5h10M11 9h7M11 13h4M3 17l3 3 3-3M6 18V4"/></svg>Sort</button><div class="dropdown-menu"><div class="dropdown-item" onclick="setSort('name','asc')">Name (A-Z)</div><div class="dropdown-item" onclick="setSort('name','desc')">Name (Z-A)</div><div class="dropdown-divider"></div><div class="dropdown-item active" onclick="setSort('start','asc')">Start (Earliest)</div><div class="dropdown-item" onclick="setSort('start','desc')">Start (Latest)</div><div class="dropdown-divider"></div><div class="dropdown-item" onclick="setSort('duration','desc')">Duration (Longest)</div><div class="dropdown-item" onclick="setSort('duration','asc')">Duration (Shortest)</div></div></div>
+                    <div class="dropdown" id="filterDropdown"><button class="btn btn-secondary" onclick="toggleDropdown('filterDropdown')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46"/></svg>Filter<span id="filterCount" style="display:none;background:var(--accent);color:white;padding:0 5px;border-radius:8px;font-size:10px;margin-left:4px;"></span></button><div class="dropdown-menu" style="min-width:180px;" id="filterMenu"></div></div>
+                </div>
+                <div class="toolbar-right"><div class="stats-row" id="statsRow"></div></div>
+            </div>
+            <div class="legend-panel" id="legendPanel"><div class="legend-header" onclick="toggleLegend()"><h3>Departments</h3><svg class="legend-toggle" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></div><div class="legend-content" id="legendContent"></div></div>
+            <div class="gantt-container"><div class="gantt-wrapper"><table class="gantt-table"><thead class="gantt-header"><tr><th>Initiative</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th><th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th></tr></thead><tbody id="ganttBody"></tbody></table></div></div>
+        </main>
+    </div>
+    
+    <!-- Drag tooltip -->
+    <div class="drag-tooltip" id="dragTooltip">
+        <span class="dates"></span>
+        <span class="duration"></span>
+    </div>
+    
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header"><h2 id="modalTitle">Add Initiative</h2><button class="modal-close" onclick="closeModal()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="form-group"><label>Initiative Name</label><input type="text" id="initiativeName" placeholder="Enter name"></div>
+                <div class="form-group"><label>Time Segments</label><div class="segments-container" id="segmentsContainer"></div><button class="btn btn-secondary add-segment-btn" onclick="addSegment()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Segment</button></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveInitiative()">Save</button></div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="deleteModal" onclick="closeDeleteModal()">
+        <div class="modal" style="max-width:340px;" onclick="event.stopPropagation()">
+            <div class="confirm-content"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3>Delete Initiative?</h3><p id="deleteMessage">This cannot be undone.</p><div class="confirm-actions"><button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button><button class="btn btn-danger" onclick="confirmDelete()">Delete</button></div></div>
+        </div>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+    <script>
+        const departments = {
+            'ITOps': { color: '#dc2626', label: 'IT Operations' },
+            'Infra': { color: '#7c3aed', label: 'Infrastructure' },
+            'Dev': { color: '#3b82f6', label: 'Development' },
+            'ERP': { color: '#ea580c', label: 'ERP Systems' },
+            '3rd Party': { color: '#1f2937', label: '3rd Party' },
+            'Admin': { color: '#6b7280', label: 'Administration' }
+        };
+        
+        let initiatives = [
+            { id: 1, name: 'Matrix upgrade', segments: [{start:1,end:3,department:'ITOps'}] },
+            { id: 2, name: 'Reduce Licensing Cost', segments: [{start:1,end:3,department:'ITOps'}] },
+            { id: 3, name: 'Service Improvement (helpdesk CR,SLA)', segments: [{start:1,end:2,department:'Dev'},{start:3,end:5,department:'ITOps'}] },
+            { id: 4, name: 'General Technology Awareness (AI)', segments: [{start:2,end:2,department:'ITOps'},{start:5,end:5,department:'ITOps'},{start:8,end:8,department:'ITOps'},{start:10,end:10,department:'ITOps'}] },
+            { id: 5, name: 'Cyber Security Awareness', segments: [{start:3,end:3,department:'Infra'},{start:6,end:6,department:'Infra'},{start:9,end:9,department:'Infra'},{start:12,end:12,department:'Infra'}] },
+            { id: 6, name: 'Annual Security Audit - External', segments: [{start:1,end:3,department:'Infra'}] },
+            { id: 7, name: 'User Account Creation Automation', segments: [{start:2,end:3,department:'Infra'}] },
+            { id: 8, name: 'Backup Restore Automation', segments: [{start:1,end:1,department:'Infra'}] },
+            { id: 9, name: 'O365 License Assignment Automation', segments: [{start:2,end:3,department:'Infra'}] },
+            { id: 10, name: 'D365 Audit Log View', segments: [{start:2,end:3,department:'Infra'}] },
+            { id: 11, name: 'License Monitoring Development & Implementation', segments: [{start:1,end:1,department:'Dev'},{start:2,end:3,department:'Infra'}] },
+            { id: 12, name: 'Bulk Purchase', segments: [{start:1,end:3,department:'Admin'},{start:4,end:6,department:'ERP'}] },
+            { id: 13, name: 'D365 Cloud Environment Testing', segments: [{start:4,end:6,department:'ERP'}] },
+            { id: 14, name: 'Unifi Controller Upgrade', segments: [{start:4,end:6,department:'Infra'}] },
+            { id: 15, name: 'CS Archiving', segments: [{start:6,end:12,department:'3rd Party'}] },
+            { id: 16, name: 'TD Retail & CRM Implementation', segments: [{start:7,end:12,department:'ERP'}] },
+            { id: 17, name: 'AI Model hosting internally', segments: [{start:1,end:3,department:'Admin'},{start:4,end:5,department:'Infra'}] },
+            { id: 18, name: 'Automation of ITOps forms', segments: [{start:1,end:12,department:'ITOps'}] }
+        ];
+
+        let state = { theme: localStorage.getItem('theme')||'light', viewMode: false, legendCollapsed: false, sortField: 'start', sortDir: 'asc', activeDepartments: new Set(Object.keys(departments)), searchQuery: '', deleteId: null };
+        const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const monthFull = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const currentMonth = new Date().getMonth() + 1;
+        
+        // Drag state
+        let drag = null;
+        const tooltip = document.getElementById('dragTooltip');
+
+        document.addEventListener('DOMContentLoaded', () => { 
+            loadFromStorage(); 
+            applyTheme(); 
+            renderAll(); 
+            setupClickOutside();
+            setupGlobalDragListeners();
+        });
+
+        function loadFromStorage() { const s = localStorage.getItem('mtcc_initiatives_v4'); if (s) initiatives = JSON.parse(s); }
+        function saveToStorage() { localStorage.setItem('mtcc_initiatives_v4', JSON.stringify(initiatives)); }
+        
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', state.theme);
+            document.getElementById('themeIcon').innerHTML = state.theme === 'dark' ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>' : '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+        }
+        function toggleTheme() { state.theme = state.theme === 'light' ? 'dark' : 'light'; localStorage.setItem('theme', state.theme); applyTheme(); }
+        
+        function toggleViewMode() {
+            state.viewMode = !state.viewMode;
+            ['appContainer','header','mainContent'].forEach(id => document.getElementById(id).classList.toggle('view-mode', state.viewMode));
+            document.getElementById('viewModeBtn').innerHTML = state.viewMode ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>Exit' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>View';
+        }
+        
+        function toggleLegend() { state.legendCollapsed = !state.legendCollapsed; document.getElementById('legendPanel').classList.toggle('collapsed', state.legendCollapsed); }
+        function toggleDropdown(id) { const d = document.getElementById(id), wasOpen = d.classList.contains('open'); document.querySelectorAll('.dropdown').forEach(x => x.classList.remove('open')); if (!wasOpen) d.classList.add('open'); }
+        function setupClickOutside() { document.addEventListener('click', e => { if (!e.target.closest('.dropdown')) document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('open')); }); }
+        
+        function setSort(field, dir) { state.sortField = field; state.sortDir = dir; document.getElementById('sortDropdown').classList.remove('open'); renderGantt(); }
+        
+        function getSortedInitiatives(list) {
+            return [...list].sort((a, b) => {
+                const aStart = Math.min(...a.segments.map(s=>s.start));
+                const bStart = Math.min(...b.segments.map(s=>s.start));
+                const aEnd = Math.max(...a.segments.map(s=>s.end));
+                const bEnd = Math.max(...b.segments.map(s=>s.end));
+                let cmp = 0;
+                if (state.sortField === 'name') cmp = a.name.localeCompare(b.name);
+                else if (state.sortField === 'start') cmp = aStart - bStart;
+                else if (state.sortField === 'duration') cmp = (aEnd - aStart) - (bEnd - bStart);
+                return state.sortDir === 'desc' ? -cmp : cmp;
+            });
+        }
+        
+        function toggleDepartmentFilter(cat) { state.activeDepartments.has(cat) ? state.activeDepartments.delete(cat) : state.activeDepartments.add(cat); applyFilters(); }
+        function applyFilters() { state.searchQuery = document.getElementById('searchInput').value; updateFilterCount(); renderLegend(); renderFilterMenu(); renderGantt(); }
+        function resetFilters() { state.activeDepartments = new Set(Object.keys(departments)); state.searchQuery = ''; document.getElementById('searchInput').value = ''; document.getElementById('filterDropdown').classList.remove('open'); applyFilters(); }
+        function updateFilterCount() { const c = document.getElementById('filterCount'), total = Object.keys(departments).length, active = state.activeDepartments.size; c.textContent = active; c.style.display = active < total ? 'inline' : 'none'; }
+        
+        function getFilteredInitiatives() {
+            return initiatives.filter(i => {
+                const hasActiveDepartment = i.segments.some(s => state.activeDepartments.has(s.department));
+                const matchesSearch = i.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+                return hasActiveDepartment && matchesSearch;
+            });
+        }
+        
+        function renderAll() { renderStats(); renderLegend(); renderFilterMenu(); renderGantt(); }
+        
+        function renderStats() {
+            document.getElementById('statsRow').innerHTML = `<div class="stat-item"><strong>${initiatives.length}</strong><span>Initiatives</span></div>`;
+        }
+        
+        function renderLegend() {
+            document.getElementById('legendContent').innerHTML = Object.entries(departments).map(([k,v]) => `<div class="department-chip ${state.activeDepartments.has(k)?'active':'inactive'}" onclick="toggleDepartmentFilter('${k}')"><div class="department-dot" style="background:${v.color}"></div>${k}</div>`).join('');
+        }
+        
+        function renderFilterMenu() {
+            document.getElementById('filterMenu').innerHTML = '<div style="padding:6px 12px;font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Departments</div>' +
+                Object.entries(departments).map(([k,v]) => `<div class="dropdown-item ${state.activeDepartments.has(k)?'active':''}" onclick="toggleDepartmentFilter('${k}');event.stopPropagation();"><div class="department-dot" style="background:${v.color};width:8px;height:8px;border-radius:50%;"></div>${k}${state.activeDepartments.has(k)?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;"><polyline points="20,6 9,17 4,12"/></svg>':''}</div>`).join('') +
+                '<div class="dropdown-divider"></div><div class="dropdown-item" onclick="resetFilters()">Reset All</div>';
+        }
+        
+        function renderGantt() {
+            const tbody = document.getElementById('ganttBody'), filtered = getSortedInitiatives(getFilteredInitiatives());
+            if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="13"><div class="empty-state"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg><h3>No initiatives</h3><p>Adjust filters or add new</p></div></td></tr>'; return; }
+            
+            tbody.innerHTML = filtered.map(init => {
+                const uniqueCats = [...new Set(init.segments.map(s => s.department))];
+                const minStart = Math.min(...init.segments.map(s=>s.start));
+                const maxEnd = Math.max(...init.segments.map(s=>s.end));
+                const colorDots = uniqueCats.map(c => `<div class="initiative-color" style="background:${departments[c].color}"></div>`).join('');
+                
+                return `<tr class="gantt-row" data-id="${init.id}">
+                    <td><div class="initiative-cell">
+                        <div class="initiative-colors">${colorDots}</div>
+                        <div class="initiative-info"><div class="initiative-name">${init.name}</div><div class="initiative-meta">${monthNames[minStart-1]} - ${monthNames[maxEnd-1]} · ${maxEnd - minStart + 1} mo</div></div>
+                        <div class="initiative-actions">
+                            <button class="action-btn" onclick="editInitiative(${init.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                            <button class="action-btn delete" onclick="deleteInitiative(${init.id})"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                        </div>
+                    </div></td>
+                    ${renderTimelineCells(init)}
+                </tr>`;
+            }).join('');
+        }
+        
+        function renderTimelineCells(init) {
+            let cells = '';
+            for (let m = 1; m <= 12; m++) {
+                const isCurrent = m === currentMonth;
+                let bars = '';
+                
+                init.segments.forEach((seg, idx) => {
+                    if (seg.start === m) {
+                        const widthPct = (seg.end - seg.start + 1) * 100;
+                        const color = departments[seg.department]?.color || '#888';
+                        const dur = seg.end - seg.start + 1;
+                        bars += `<div class="bar" data-id="${init.id}" data-seg="${idx}" style="left:2px;width:calc(${widthPct}% - 4px);background:${color};">
+                            <div class="resize-handle left" data-handle="left"></div>
+                            <span class="bar-label">${dur > 1 ? dur + ' mo' : monthNames[seg.start-1]}</span>
+                            <div class="resize-handle right" data-handle="right"></div>
+                        </div>`;
+                    }
+                });
+                
+                cells += `<td class="timeline-cell ${isCurrent?'current-month':''}" data-month="${m}">${bars}</td>`;
+            }
+            return cells;
+        }
+        
+        // ============ IMPROVED DRAG SYSTEM ============
+        function setupGlobalDragListeners() {
+            document.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+        
+        function onMouseDown(e) {
+            const bar = e.target.closest('.bar');
+            if (!bar) return;
+            
+            e.preventDefault();
+            
+            const id = parseInt(bar.dataset.id);
+            const segIdx = parseInt(bar.dataset.seg);
+            const init = initiatives.find(i => i.id === id);
+            if (!init) return;
+            
+            const handle = e.target.closest('.resize-handle');
+            const type = handle ? handle.dataset.handle : 'move';
+            
+            // Get cell dimensions
+            const row = bar.closest('.gantt-row');
+            const cells = row.querySelectorAll('.timeline-cell');
+            const firstCell = cells[0];
+            const cellRect = firstCell.getBoundingClientRect();
+            const cellWidth = cellRect.width;
+            const gridLeft = cellRect.left;
+            
+            drag = {
+                id,
+                segIdx,
+                type,
+                bar,
+                row,
+                cellWidth,
+                gridLeft,
+                startX: e.clientX,
+                origSeg: { ...init.segments[segIdx] },
+                currentStart: init.segments[segIdx].start,
+                currentEnd: init.segments[segIdx].end
+            };
+            
+            // Visual feedback
+            bar.classList.add('dragging');
+            row.classList.add('dragging');
+            document.body.classList.add(type === 'move' ? 'dragging-move' : 'dragging-resize');
+            
+            // Show tooltip
+            updateTooltip(e, init.segments[segIdx]);
+        }
+        
+        function onMouseMove(e) {
+            if (!drag) return;
+            
+            const init = initiatives.find(i => i.id === drag.id);
+            if (!init) return;
+            
+            // Calculate which month the mouse is over
+            const mouseMonth = Math.floor((e.clientX - drag.gridLeft) / drag.cellWidth) + 1;
+            const clampedMonth = Math.max(1, Math.min(12, mouseMonth));
+            
+            const seg = init.segments[drag.segIdx];
+            const duration = drag.origSeg.end - drag.origSeg.start + 1;
+            
+            if (drag.type === 'move') {
+                // Calculate new position based on mouse
+                const deltaMonths = clampedMonth - drag.origSeg.start;
+                let newStart = drag.origSeg.start + deltaMonths;
+                let newEnd = newStart + duration - 1;
+                
+                // Clamp to boundaries
+                if (newStart < 1) { newStart = 1; newEnd = duration; }
+                if (newEnd > 12) { newEnd = 12; newStart = 12 - duration + 1; }
+                
+                seg.start = newStart;
+                seg.end = newEnd;
+            } else if (drag.type === 'left') {
+                seg.start = Math.max(1, Math.min(seg.end, clampedMonth));
+            } else if (drag.type === 'right') {
+                seg.end = Math.max(seg.start, Math.min(12, clampedMonth));
+            }
+            
+            // Update bar position smoothly
+            const left = (seg.start - 1) * drag.cellWidth + 2;
+            const width = (seg.end - seg.start + 1) * drag.cellWidth - 4;
+            drag.bar.style.left = left + 'px';
+            drag.bar.style.width = width + 'px';
+            
+            // Update label
+            const dur = seg.end - seg.start + 1;
+            drag.bar.querySelector('.bar-label').textContent = dur > 1 ? dur + ' mo' : monthNames[seg.start-1];
+            
+            // Update row meta
+            const minStart = Math.min(...init.segments.map(s=>s.start));
+            const maxEnd = Math.max(...init.segments.map(s=>s.end));
+            drag.row.querySelector('.initiative-meta').textContent = `${monthNames[minStart-1]} - ${monthNames[maxEnd-1]} · ${maxEnd - minStart + 1} mo`;
+            
+            // Update tooltip
+            updateTooltip(e, seg);
+        }
+        
+        function onMouseUp(e) {
+            if (!drag) return;
+            
+            // Remove visual feedback
+            drag.bar.classList.remove('dragging');
+            drag.row.classList.remove('dragging');
+            document.body.classList.remove('dragging-move', 'dragging-resize');
+            
+            // Hide tooltip
+            tooltip.classList.remove('visible');
+            
+            // Save and re-render
+            saveToStorage();
+            renderGantt();
+            
+            drag = null;
+        }
+        
+        function updateTooltip(e, seg) {
+            const dur = seg.end - seg.start + 1;
+            tooltip.querySelector('.dates').textContent = `${monthFull[seg.start-1]} → ${monthFull[seg.end-1]}`;
+            tooltip.querySelector('.duration').textContent = `(${dur} month${dur > 1 ? 's' : ''})`;
+            tooltip.style.left = (e.clientX + 15) + 'px';
+            tooltip.style.top = (e.clientY - 10) + 'px';
+            tooltip.classList.add('visible');
+        }
+        
+        // ============ MODAL ============
+        let modalSegments = [];
+        
+        function openModal(id = null) {
+            document.getElementById('editId').value = '';
+            document.getElementById('initiativeName').value = '';
+            modalSegments = [];
+            
+            if (id) {
+                const init = initiatives.find(i => i.id === id);
+                if (init) {
+                    document.getElementById('modalTitle').textContent = 'Edit Initiative';
+                    document.getElementById('editId').value = init.id;
+                    document.getElementById('initiativeName').value = init.name;
+                    modalSegments = init.segments.map(s => ({...s}));
+                }
+            } else {
+                document.getElementById('modalTitle').textContent = 'Add Initiative';
+                modalSegments = [{start:1, end:3, department:'ITOps'}];
+            }
+            
+            renderSegments();
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+        
+        function renderSegments() {
+            const container = document.getElementById('segmentsContainer');
+            const catOptions = Object.entries(departments).map(([k,v]) => `<option value="${k}">${k}</option>`).join('');
+            const monthOptions = monthNames.map((m,i) => `<option value="${i+1}">${m}</option>`).join('');
+            
+            container.innerHTML = modalSegments.map((seg, idx) => `
+                <div class="segment-row">
+                    <div class="form-group" style="margin:0"><label>Start</label><select onchange="updateSegment(${idx},'start',this.value)">${monthOptions.replace(`value="${seg.start}"`, `value="${seg.start}" selected`)}</select></div>
+                    <div class="form-group" style="margin:0"><label>End</label><select onchange="updateSegment(${idx},'end',this.value)">${monthOptions.replace(`value="${seg.end}"`, `value="${seg.end}" selected`)}</select></div>
+                    <div class="form-group" style="margin:0"><label>Department</label><select onchange="updateSegment(${idx},'department',this.value)">${catOptions.replace(`value="${seg.department}"`, `value="${seg.department}" selected`)}</select></div>
+                    <button class="btn btn-ghost" onclick="removeSegment(${idx})" ${modalSegments.length===1?'disabled':''}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                </div>
+            `).join('');
+        }
+        
+        function updateSegment(idx, field, value) {
+            if (field === 'start' || field === 'end') value = parseInt(value);
+            modalSegments[idx][field] = value;
+        }
+        
+        function addSegment() {
+            const last = modalSegments[modalSegments.length - 1];
+            modalSegments.push({start: Math.min(12, last.end + 1), end: Math.min(12, last.end + 1), department: last.department});
+            renderSegments();
+        }
+        
+        function removeSegment(idx) {
+            if (modalSegments.length > 1) { modalSegments.splice(idx, 1); renderSegments(); }
+        }
+        
+        function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+        function closeModalOnOverlay(e) { if (e.target === e.currentTarget) closeModal(); }
+        
+        function saveInitiative() {
+            const editId = document.getElementById('editId').value;
+            const name = document.getElementById('initiativeName').value.trim();
+            
+            if (!name) return showToast('Enter a name', 'error');
+            for (let seg of modalSegments) { if (seg.end < seg.start) return showToast('End must be >= Start', 'error'); }
+            
+            if (editId) {
+                const idx = initiatives.findIndex(i => i.id === parseInt(editId));
+                if (idx !== -1) { initiatives[idx] = { ...initiatives[idx], name, segments: modalSegments }; showToast('Updated', 'success'); }
+            } else {
+                initiatives.push({ id: Math.max(0, ...initiatives.map(i => i.id)) + 1, name, segments: modalSegments });
+                showToast('Added', 'success');
+            }
+            
+            saveToStorage(); renderAll(); closeModal();
+        }
+        
+        function editInitiative(id) { openModal(id); }
+        function deleteInitiative(id) { state.deleteId = id; document.getElementById('deleteMessage').textContent = `Delete "${initiatives.find(i=>i.id===id).name}"?`; document.getElementById('deleteModal').classList.add('active'); }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); state.deleteId = null; }
+        function confirmDelete() { if (state.deleteId) { initiatives = initiatives.filter(i => i.id !== state.deleteId); saveToStorage(); renderAll(); showToast('Deleted', 'success'); } closeDeleteModal(); }
+        
+        async function exportToPDF() {
+            showToast('Generating...', 'success');
+            document.getElementById('headerActions').style.visibility = 'hidden';
+            document.getElementById('toolbar').style.visibility = 'hidden';
+            document.querySelectorAll('.initiative-actions').forEach(el => el.style.visibility = 'hidden');
+            
+            try {
+                const canvas = await html2canvas(document.querySelector('.app-container'), { scale: 2, useCORS: true, backgroundColor: state.theme === 'dark' ? '#0f172a' : '#ffffff' });
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
+                const ratio = Math.min(pdf.internal.pageSize.getWidth() / canvas.width, pdf.internal.pageSize.getHeight() / canvas.height);
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 5, 5, canvas.width * ratio - 10, canvas.height * ratio - 10);
+                pdf.save('IT_Action_Plan_2026.pdf');
+                showToast('Exported!', 'success');
+            } catch (err) { console.error(err); showToast('Failed', 'error'); }
+            finally { document.getElementById('headerActions').style.visibility = ''; document.getElementById('toolbar').style.visibility = ''; document.querySelectorAll('.initiative-actions').forEach(el => el.style.visibility = ''); }
+        }
+        
+        function showToast(msg, type = 'success') {
+            const c = document.getElementById('toastContainer'), t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${type==='success'?'#22c55e':'#dc2626'}" stroke-width="2">${type==='success'?'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/>':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}</svg><span>${msg}</span>`;
+            c.appendChild(t);
+            setTimeout(() => { t.style.animation = 'slideIn 0.15s ease reverse'; setTimeout(() => t.remove(), 150); }, 2000);
+        }
+    </script>
+</body>
+</html>
+

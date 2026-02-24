@@ -1,0 +1,31 @@
+# Secrets and local env
+.env
+.env.local
+.env.*.local
+
+# TLS certs / private keys
+nginx/certs/*
+!nginx/certs/.gitkeep
+
+# Build artifacts and dependencies
+backend/node_modules/
+backend/dist/
+admin-cms/node_modules/
+admin-cms/dist/
+user-portal/node_modules/
+user-portal/dist/
+
+# Local tooling state
+.codex/
+**/.codex/
+
+# Exports / backups / generated archives
+exports/*
+!exports/.gitkeep
+*.log
+*.tmp
+
+# OS / editor noise
+.DS_Store
+.idea/
+.vscode/

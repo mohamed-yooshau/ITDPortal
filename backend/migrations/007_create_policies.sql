@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS policies (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  file_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);

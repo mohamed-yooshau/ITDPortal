@@ -1,0 +1,193 @@
+worker_processes 1;
+
+load_module modules/ngx_http_js_module.so;
+
+events { worker_connections 1024; }
+
+http {
+  include       /etc/nginx/mime.types;
+  default_type  application/octet-stream;
+  sendfile      on;
+  server_tokens off;
+  resolver 127.0.0.11 valid=30s ipv6=off;
+  client_max_body_size 50m;
+
+  js_import /etc/nginx/js/no.js;
+
+  server {
+    listen 80;
+    server_name dev-itdportal.mtcc.com.mv itdportal.mtcc.com.mv;
+    client_max_body_size 50m;
+
+    location = /no {
+      js_content no.noHandler;
+    }
+
+    location / {
+      return 301 https://$host$request_uri;
+    }
+  }
+
+  server {
+    listen 443 ssl;
+    server_name dev-itdportal.mtcc.com.mv itdportal.mtcc.com.mv;
+    client_max_body_size 50m;
+
+    ssl_certificate /etc/nginx/certs/server.crt;
+    ssl_certificate_key /etc/nginx/certs/server.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+
+    error_page 401 403 404 500 502 503 504 /__no;
+
+    location = /no {
+      js_content no.noHandler;
+    }
+
+    location = /api/admin/policies/upload {
+      client_max_body_size 50m;
+      client_body_buffer_size 10m;
+      proxy_request_buffering off;
+      proxy_pass http://backend:3000;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /api/ {
+      client_max_body_size 50m;
+      client_body_buffer_size 10m;
+      proxy_request_buffering off;
+      set $backend_upstream backend;
+      proxy_pass http://$backend_upstream:3000;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /api/utils/speed/download/stream {
+      client_max_body_size 50m;
+      proxy_request_buffering off;
+      proxy_buffering off;
+      set $backend_upstream backend;
+      proxy_pass http://$backend_upstream:3000;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /api/utils/speed/external-download {
+      client_max_body_size 50m;
+      proxy_request_buffering off;
+      proxy_buffering off;
+      set $backend_upstream backend;
+      proxy_pass http://$backend_upstream:3000;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /_admin_auth {
+      internal;
+      proxy_pass http://backend:3000/api/auth/admin-check;
+      proxy_pass_request_body off;
+      proxy_set_header Content-Length "";
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header Cookie $http_cookie;
+    }
+
+    location = /${ADMIN_PATH} {
+      return 301 /${ADMIN_PATH}/;
+    }
+
+    location = /${ADMIN_PATH}/login {
+      client_max_body_size 50m;
+      rewrite ^/${ADMIN_PATH}/(.*)$ /$1 break;
+      proxy_pass http://admin-cms:80;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location ^~ /${ADMIN_PATH}/auth/ {
+      client_max_body_size 50m;
+      rewrite ^/${ADMIN_PATH}/(.*)$ /$1 break;
+      proxy_pass http://admin-cms:80;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location ^~ /${ADMIN_PATH}/assets/ {
+      client_max_body_size 50m;
+      rewrite ^/${ADMIN_PATH}/(.*)$ /$1 break;
+      proxy_pass http://admin-cms:80;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /${ADMIN_PATH}/ {
+      auth_request /_admin_auth;
+      error_page 401 403 = /__no;
+      client_max_body_size 50m;
+      rewrite ^/${ADMIN_PATH}/(.*)$ /$1 break;
+      proxy_pass http://admin-cms:80;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /__no {
+      internal;
+      default_type text/html;
+      return 403 '<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>NO</title><style>html,body{height:100%;margin:0}body{display:flex;align-items:center;justify-content:center;background:#0b0f14;color:#e6edf3;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;overflow:hidden}main{text-align:center;padding:32px;max-width:900px;position:relative;z-index:2}h1{font-size:140px;letter-spacing:0.08em;margin:0;line-height:1}.line{width:140px;height:2px;background:#1f2a37;margin:20px auto}p{margin:16px 0 0;font-size:16px;color:rgba(230,237,243,.7)}.msg{font-size:28px;color:#e6edf3;margin-top:14px;font-weight:600;letter-spacing:0.02em}.bg{position:fixed;inset:0;z-index:1;pointer-events:none}canvas{width:100%;height:100%;display:block}</style></head><body><canvas class="bg" id="bg"></canvas><main><h1>NO</h1><div class="line"></div><div id="msg" class="msg">NOPE.</div><p>Access denied or page unavailable.</p></main><script>(function(){var m=["NOOOOOOOOOOOOOOOOOOOOOOOOO 🚫","ABSOLUTELY NOT. THIS IS A HUGE NO.","ACCESS DENIED — GIANT NO INCOMING.","NOPE. NOT TODAY. NOT EVER.","REQUEST REJECTED. THE GREMLINS SCREAMED NO.","PERMISSION DENIED. THE FIREWALL ATE YOUR HOMEWORK.","NOT AUTHORIZED. PLEASE TRY TELEPATHY.","GO AWAY. COME BACK WITH SNACKS.","NOT HAPPENING. TRY AGAIN IN THE YEAR 3000.","DENIED. THE DOOR IS LOCKED AND THE KEY IS IMAGINARY.","THIS IS A NO. A DRAMATIC, CINEMATIC NO.","NO ENTRY. THE BOUNCER SAID YOU’RE NOT ON THE LIST.","YOU SHALL NOT PASS. (IT’S A CLASSIC FOR A REASON.)","NO WAY. NOT EVEN A LITTLE.","NOT IN THIS LIFETIME.","WE’RE NOT DOING THAT. EVER.","THAT’S A NO FROM ME AND MY COMMITTEE OF CATS.","NOPE NOPE NOPE. TRIPLE NOPE.","NO MEANS NO. THE UNIVERSE AGREES.","REQUEST BLOCKED. THE HAMSTER POWERING THE SERVER DISAPPROVES.","ACCESS FORBIDDEN. THE DRAGONS ARE ASLEEP.","NOT ALLOWED. THE POLICY IS CARVED IN STONE.","SECURITY SAYS NO. AND SECURITY ALWAYS SAYS NO.","DENIED BY POLICY. BLAME THE POLICY.","NOT FOR YOU. THIS ONE’S BEHIND GLASS.","NO CAN DO. I’M A SERVER, NOT A GENIE.","DO NOT PASS GO. DO NOT COLLECT 200.","NOT PERMITTED. THIS IS NOT THE DROID YOU SEEK.","NOPE — INSUFFICIENT ACCESS. TRY LEVELING UP.","DENIED — INSUFFICIENT ACCESS. PLEASE CONSULT YOUR WIZARD.","YOUR REQUEST WAS DENIED. THE COUNCIL HAS SPOKEN.","NO. JUST NO. FULL STOP.","PERMISSION DENIED. THE VIBES WERE OFF.","NO. THIS IS A VERY LARGE NO."];var el=document.getElementById("msg");if(el){el.textContent=m[Math.floor(Math.random()*m.length)]}})();(function(){var c=document.getElementById("bg");if(!c)return;var ctx=c.getContext("2d");var w,h,dpr;function resize(){dpr=Math.min(window.devicePixelRatio||1,1.5);w=window.innerWidth;h=window.innerHeight;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}resize();window.addEventListener("resize",resize);var t=0;function draw(){t+=0.002;ctx.clearRect(0,0,w,h);ctx.fillStyle="#0b0f14";ctx.fillRect(0,0,w,h);ctx.strokeStyle="rgba(80,160,255,0.15)";ctx.lineWidth=1;ctx.lineJoin="round";ctx.lineCap="round";var lines=8;for(var i=0;i<lines;i++){ctx.beginPath();var y=h*0.6+i*(h*0.4/lines);for(var x=0;x<=w;x+=20){var yy=y+Math.sin(x*0.01+t+i)*12+Math.sin(x*0.004+t*1.5+i)*20;ctx.lineTo(x,yy)}ctx.stroke()}requestAnimationFrame(draw)}draw()})();</script></body></html>';
+    }
+
+    location = /admin {
+      return 404;
+    }
+
+    location /admin/ {
+      return 404;
+    }
+
+    location / {
+      client_max_body_size 50m;
+      set $user_upstream user-portal;
+      proxy_pass http://$user_upstream:80;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }
+  }
+}

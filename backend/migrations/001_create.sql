@@ -1,0 +1,57 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user',
+  last_login TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS local_admins (
+  id SERIAL PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'super_admin',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id SERIAL PRIMARY KEY,
+  name TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS services (
+  id SERIAL PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+  icon TEXT,
+  status TEXT NOT NULL DEFAULT 'active',
+  form_link TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS forms (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  type TEXT NOT NULL,
+  url TEXT NOT NULL,
+  description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS knowledge_base (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  category TEXT NOT NULL,
+  body TEXT NOT NULL,
+  tags TEXT[],
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  id SERIAL PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  value TEXT NOT NULL
+);
