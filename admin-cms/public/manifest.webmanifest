@@ -1,0 +1,13 @@
+{
+  "name": "ITD Portal Admin",
+  "short_name": "ITD Admin",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d2445",
+  "theme_color": "#0d2445",
+  "icons": [
+    {"src": "/app-icon-itd-v2-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/app-icon-itd-v2-256.png", "sizes": "256x256", "type": "image/png"},
+    {"src": "/app-icon-itd-v2-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

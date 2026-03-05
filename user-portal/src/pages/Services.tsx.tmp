@@ -1,0 +1,1 @@
+$(sed '1,520p' /opt/it-portal/user-portal/src/pages/Services.tsx)

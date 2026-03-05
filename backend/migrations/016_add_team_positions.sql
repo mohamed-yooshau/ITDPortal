@@ -1,0 +1,3 @@
+ALTER TABLE team_members
+  ADD COLUMN IF NOT EXISTS pos_x INT,
+  ADD COLUMN IF NOT EXISTS pos_y INT;
