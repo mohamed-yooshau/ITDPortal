@@ -106,7 +106,7 @@ services:
     networks:
       - itdportal-net
 
-  nginx:
+  gateway:
     build: ./nginx
     environment:
       ADMIN_PATH: ${ADMIN_PATH:-secure-admin}
