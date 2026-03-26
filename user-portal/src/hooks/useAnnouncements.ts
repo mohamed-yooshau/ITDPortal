@@ -21,8 +21,7 @@ export default function useAnnouncements() {
     let active = true;
     let timer: number | null = null;
 
-    const load = () => {
-      api.get("/status/summary").catch(() => undefined);
+    const loadAnnouncements = () => {
       api
         .get("/announcements")
         .then((res) => {
@@ -36,12 +35,22 @@ export default function useAnnouncements() {
         });
     };
 
+    const syncStatusAndLoadAnnouncements = () => {
+      api
+        .get("/status/summary")
+        .catch(() => undefined)
+        .finally(() => {
+          if (!active) return;
+          loadAnnouncements();
+        });
+    };
+
     const connect = () => {
       if (eventSourceRef.current) return;
       const source = new EventSource("/api/announcements/stream");
       eventSourceRef.current = source;
       source.addEventListener("announcements:update", () => {
-        load();
+        loadAnnouncements();
       });
       source.onerror = () => {
         source.close();
@@ -49,9 +58,9 @@ export default function useAnnouncements() {
       };
     };
 
-    load();
+    syncStatusAndLoadAnnouncements();
     connect();
-    timer = window.setInterval(load, 60_000);
+    timer = window.setInterval(syncStatusAndLoadAnnouncements, 60_000);
 
     return () => {
       active = false;

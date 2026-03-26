@@ -45,9 +45,11 @@ type MonitorSummary = {
   status: "up" | "down" | "pending" | "unknown";
 };
 
-async function syncSystemAnnouncements(monitors: MonitorSummary[]) {
-  if (!monitors.length) return;
+async function syncSystemAnnouncements(monitors: MonitorSummary[]): Promise<boolean> {
+  if (!monitors.length) return false;
   const downMonitors = monitors.filter((monitor) => monitor.status === "down");
+  let changed = false;
+
   if (downMonitors.length) {
     const upsertValues = downMonitors.flatMap((monitor) => [
       `Service Down: ${monitor.name}`,
@@ -63,7 +65,7 @@ async function syncSystemAnnouncements(monitors: MonitorSummary[]) {
           },$${idx * 4 + 4},now(),now())`
       )
       .join(", ");
-    await pool.query(
+    const result = await pool.query(
       `
       INSERT INTO announcements
         (source, kind, title, message, severity, status, service_id, service_name, created_at, updated_at)
@@ -77,15 +79,23 @@ async function syncSystemAnnouncements(monitors: MonitorSummary[]) {
         status = 'active',
         service_name = EXCLUDED.service_name,
         updated_at = now()
+      WHERE
+        announcements.title IS DISTINCT FROM EXCLUDED.title
+        OR announcements.message IS DISTINCT FROM EXCLUDED.message
+        OR announcements.kind IS DISTINCT FROM 'system_maintenance'
+        OR announcements.severity IS DISTINCT FROM 'critical'
+        OR announcements.status IS DISTINCT FROM 'active'
+        OR announcements.service_name IS DISTINCT FROM EXCLUDED.service_name
       `,
       upsertValues
     );
+    changed = changed || (result.rowCount ?? 0) > 0;
   }
 
   const downIds = downMonitors.map((monitor) => String(monitor.id));
   if (downIds.length) {
     const params = downIds.map((_, idx) => `$${idx + 1}`).join(", ");
-    await pool.query(
+    const result = await pool.query(
       `
       UPDATE announcements
       SET status = 'resolved', updated_at = now()
@@ -95,25 +105,28 @@ async function syncSystemAnnouncements(monitors: MonitorSummary[]) {
       `,
       downIds
     );
+    changed = changed || (result.rowCount ?? 0) > 0;
   } else {
-    await pool.query(
+    const result = await pool.query(
       `
       UPDATE announcements
       SET status = 'resolved', updated_at = now()
       WHERE source = 'uptime_kuma' AND status = 'active'
       `
     );
+    changed = changed || (result.rowCount ?? 0) > 0;
   }
-  broadcastAnnouncementsUpdate({ type: "changed" });
+
+  if (changed) {
+    broadcastAnnouncementsUpdate({ type: "changed" });
+  }
+
+  return changed;
 }
 
 router.get("/summary", requireAuth, async (req, res) => {
   const force = req.query.force === "1";
   if (!force && cached && cached.expiresAt > Date.now()) {
-    const cachedData = cached.data as { monitors?: MonitorSummary[] } | null;
-    if (cachedData?.monitors && Array.isArray(cachedData.monitors)) {
-      syncSystemAnnouncements(cachedData.monitors).catch(() => undefined);
-    }
     res.json(cached.data);
     return;
   }
